@@ -4,7 +4,7 @@
 func (v {{ $.Go }}) encodeURI(e uri.Encoder) error {
 	{{- range $f := $.Fields }}
 	{{- if $f.Spec }}
-		if err := e.EncodeField("{{ $f.Spec.Name }}", func(e uri.Encoder) error {
+		if err := e.EncodeField({{ printf "%q" $f.Spec.Name }}, func(e uri.Encoder) error {
 			{{- template "uri/encode" elem $f.Type (printf "v.%s" $f.Name) }}
 		}); err != nil {
 			return errors.Wrap(err, `field {{ $f.Spec.Name }}`)
@@ -22,7 +22,7 @@ func (v *{{ $.Go }}) decodeURI(d uri.Decoder) error {
 		switch name {
 		{{- range $f := $.Fields }}
 		{{- if $f.Spec }}
-		case "{{ $f.Spec.Name }}":
+		case {{ printf "%q" $f.Spec.Name }}:
 			{{- template "uri/decode" elem $f.Type (printf "v.%s" $f.Name) }}
 		{{- end }}
 		{{- end }}

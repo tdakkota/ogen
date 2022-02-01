@@ -64,11 +64,15 @@ type ContentType string
 const (
 	// ContentTypeJSON is ContentType for json.
 	ContentTypeJSON ContentType = "application/json"
+	// ContentTypeFormURLEncoded is ContentType for URL-encoded form.
+	ContentTypeFormURLEncoded ContentType = "application/x-www-form-urlencoded"
 	// ContentTypeOctetStream is ContentType for binary.
 	ContentTypeOctetStream ContentType = "application/octet-stream"
 )
 
 func (t ContentType) JSON() bool { return t == ContentTypeJSON }
+
+func (t ContentType) FormURLEncode() bool { return t == ContentTypeFormURLEncoded }
 
 func (t ContentType) OctetStream() bool { return t == ContentTypeOctetStream }
 
@@ -89,6 +93,8 @@ func (t ContentType) Name() string {
 		return "JSON"
 	case ContentTypeOctetStream:
 		return "OctetStream"
+	case ContentTypeFormURLEncoded:
+		return "FormURLEncoded"
 	default:
 		return ""
 	}

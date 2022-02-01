@@ -70,7 +70,7 @@
 {{- else if $t.IsStruct }}
 	return {{ $var }}.decodeURI(d)
 {{- else if $t.IsSum }}
-	{{ errorf "not supported" }}
+	{{ errorf "not supported %s" $t.Name }}
 {{- else }}
     {{ errorf "unexpected kind" $t.Kind }}
 {{- end }}

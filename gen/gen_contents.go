@@ -2,6 +2,7 @@ package gen
 
 import (
 	"github.com/go-faster/errors"
+
 	"github.com/ogen-go/ogen/internal/ir"
 	"github.com/ogen-go/ogen/internal/oas"
 )
@@ -27,6 +28,15 @@ func (g *Generator) generateContents(name string, contents map[string]*oas.Schem
 
 			t.AddFeature("json")
 			result[ir.ContentTypeJSON] = t
+
+		case "application/x-www-form-urlencoded":
+			t, err := g.generateSchema(typeName, schema)
+			if err != nil {
+				return nil, errors.Wrap(err, "schema")
+			}
+
+			t.AddFeature("urlencoded")
+			result[ir.ContentTypeFormURLEncoded] = t
 
 		case "application/octet-stream":
 			if schema != nil {

@@ -213,6 +213,10 @@ func (s sampleAPIServer) OneofBug(ctx context.Context, req api.OneOfBugs) (api.O
 	panic("implement me")
 }
 
+func (s sampleAPIServer) TestFormURLEncoded(ctx context.Context, req api.DescriptionSimple) (api.TestFormURLEncodedOK, error) {
+	return api.TestFormURLEncodedOK{}, nil
+}
+
 var _ api.Handler = (*sampleAPIServer)(nil)
 
 //go:embed _testdata/pet.json

@@ -18,6 +18,17 @@ func encode{{ $op.Name }}Request{{ $contentType.Name }}(req {{ $op.Request.Type.
 	{{- else if $contentType.JSON }}
 	{{- template "req_json/enc" $type }}
 	return e, nil
+	{{- else if $contentType.FormURLEncode }}
+	e := uri.NewQueryEncoder(uri.QueryEncoderConfig{
+		Style: uri.QueryStyleForm,
+		Explode: true,
+	})
+	if err := func() error {
+		{{- template "uri/encode" elem $op.Request.Type "req" }}
+	}(); err != nil {
+		return data, errors.Wrap(err, "encode query")
+	}
+	return
 	{{- else }}
 	return nil, errors.New(`{{ $contentType }} encoder not implemented`)
 	{{- end }}

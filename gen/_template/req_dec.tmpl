@@ -15,37 +15,10 @@ func decode{{ $op.Name }}Request(r *http.Request, span trace.Span) (req {{ $op.R
 		return {{ $op.Request.Type.Go }}{Data: r.Body}, nil
 		{{- /* Decode json */ -}}
 		{{- else if $contentType.JSON }}
-		{{- if $t.GenericVariant.Optional }}
-        if r.ContentLength == 0 {
-			return req, nil
-		}
-        {{- end }}
-		var request {{ $t.Go }}
-		buf := getBuf()
-		defer putBuf(buf)
-		written, err := io.Copy(buf, r.Body)
-		if err != nil {
-			return req, err
-		}
-		if written == 0 {
-			return req, nil
-		}
-		d := jx.GetDecoder()
-		defer jx.PutDecoder(d)
-		d.ResetBytes(buf.Bytes())
-		if err := func() error {
-			{{- template "json/dec" req_dec_elem $t }}
-			return nil
-		}(); err != nil {
-			return req, err
-		}
-		{{- if $t.NeedValidation }}
-		if err := func() error {
-			{{- template "validate" req_dec_elem $t }}
-		}(); err != nil {
-			return req, errors.Wrap(err, "validate")
-		}
-		{{- end }}
+		{{- template "req_dec/json" $t }}
+		return {{ if or ($op.Request.Type.IsPointer) ($op.Request.Type.IsInterface) }}&{{ end }}request, nil
+		{{- else if $contentType.FormURLEncode }}
+		{{- template "req_dec/urlencoded" $t }}
 		return {{ if or ($op.Request.Type.IsPointer) ($op.Request.Type.IsInterface) }}&{{ end }}request, nil
 		{{- else }}
 		_ = request
@@ -62,3 +35,72 @@ func decode{{ $op.Name }}Request(r *http.Request, span trace.Span) (req {{ $op.R
 {{/* Range over all methods */}}
 
 {{ end }}
+
+{{- define "req_dec/urlencoded" }}{{- /*gotype: github.com/ogen-go/ogen/internal/ir.Type*/ -}}
+		{{- if $.GenericVariant.Optional }}
+        if r.ContentLength == 0 {
+			return req, nil
+		}
+        {{- end }}
+		var request {{ $.Go }}
+		if err := r.ParseForm(); err != nil {
+			return req, err
+		}
+		d := uri.NewQueryDecoder(uri.QueryDecoderConfig{
+			Values: r.PostForm,
+			Style: uri.QueryStyleForm,
+			Explode: true,
+		})
+
+		if err := func() error {
+			{{- template "uri/decode" req_dec_elem $ }}
+			return nil
+		}(); err != nil {
+			return req, err
+		}
+
+		{{- if $.NeedValidation }}
+		if err := func() error {
+			{{- template "validate" req_dec_elem $ }}
+		}(); err != nil {
+			return req, errors.Wrap(err, "validate")
+		}
+		{{- end }}
+{{- end }}
+
+{{- define "req_dec/json" }}{{- /*gotype: github.com/ogen-go/ogen/internal/ir.Type*/ -}}
+		{{- if $.GenericVariant.Optional }}
+        if r.ContentLength == 0 {
+			return req, nil
+		}
+        {{- end }}
+		var request {{ $.Go }}
+		buf := getBuf()
+		defer putBuf(buf)
+		written, err := io.Copy(buf, r.Body)
+		if err != nil {
+			return req, err
+		}
+		if written == 0 {
+			return req, nil
+		}
+
+		d := jx.GetDecoder()
+		defer jx.PutDecoder(d)
+		d.ResetBytes(buf.Bytes())
+
+		if err := func() error {
+			{{- template "json/dec" req_dec_elem $ }}
+			return nil
+		}(); err != nil {
+			return req, err
+		}
+
+		{{- if $.NeedValidation }}
+		if err := func() error {
+			{{- template "validate" req_dec_elem $ }}
+		}(); err != nil {
+			return req, errors.Wrap(err, "validate")
+		}
+		{{- end }}
+{{- end }}

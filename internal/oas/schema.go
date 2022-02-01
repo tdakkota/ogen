@@ -75,4 +75,7 @@ type Property struct {
 	Description string  // Property description.
 	Schema      *Schema // Property schema.
 	Required    bool    // Whether the field is required or not.
+	// Encoding schema for form-encoded schemas.
+	Style   ParameterStyle
+	Explode bool
 }
